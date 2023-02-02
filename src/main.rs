@@ -1,9 +1,13 @@
 use std::env;
 use std::fs;
+use std::process;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let config = Config::new(&args);
+    let config = Config::build(&args).unwrap_or_else(|err|{
+        println!("Problem parsing arguments: {err}");
+        process::exit(1);
+    });
 
     println!("Searching for \"{}\"", config.query);
     println!("In file {}", config.file_path);
@@ -20,13 +24,13 @@ struct Config <'a>{
 }
 
 impl <'a> Config<'a> {
-    fn new(args: &[String]) -> Config {
-        if args.len() < 3 {
-            panic!("Not enough arguments! 2 required, but {} {} given", args.len() - 1, 
-                if args.len() == 2 {"was"} else {"were"});
+    fn build(args: &[String]) -> Result<Config, String> {
+        if args.len() != 3 {
+            return Err(format!("Wrong number of arguments! 2 required, but {} {} found", args.len() - 1,
+                if args.len() == 2 {"was"} else {"were"}));
         }
         let query = &args[1];
         let file_path = &args[2];
-        Config { query, file_path }
+        Ok(Config { query, file_path })
     }
 }
